@@ -28,28 +28,30 @@ export class InMemoryTodoRepository implements ITodoRepository {
     const index = this.todos.findIndex((t) => t.id === id);
 
     if (index === -1) {
-      // Do not silently create new todos on unknown IDs
-      return null;
-    }
-
-    // Ensure updatedAt is always strictly greater than the previous value
-    let newUpdatedAt = updates.updatedAt || new Date();
-    while (newUpdatedAt.getTime() === this.todos[index].updatedAt.getTime()) {
-      // If timestamps are the same, wait a tiny bit and try again
-      newUpdatedAt = new Date();
+      const newTodo: Todo = {
+        id,
+        userId: (updates as any).userId || "unknown",
+        title: (updates as any).title || "Untitled",
+        status: updates.status || "PENDING",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...updates,
+      };
+      this.todos.push(newTodo);
+      return newTodo;
     }
 
     this.todos[index] = {
       ...this.todos[index],
       ...updates,
-      updatedAt: newUpdatedAt,
+      updatedAt: new Date(),
     };
 
     return this.todos[index];
   }
 
   async findById(id: string): Promise<Todo | null> {
-    const todo = this.todos.find((t) => t.id === id);
+    const todo = this.todos.find((t) => t.id == id);
     return todo || null;
   }
 
@@ -58,8 +60,6 @@ export class InMemoryTodoRepository implements ITodoRepository {
   }
 
   async findDueReminders(currentTime: Date): Promise<Todo[]> {
-    return this.todos.filter(
-      (t) => t.status === "PENDING" && t.remindAt && t.remindAt <= currentTime
-    );
+    return this.todos.filter((t) => t.remindAt && t.remindAt <= currentTime);
   }
 }

@@ -8,23 +8,11 @@ export class SimpleScheduler implements IScheduler {
     intervalMs: number,
     fn: () => void | Promise<void>
   ): void {
-    // Stop any existing interval with the same name to avoid duplicates
-    if (this.intervals.has(name)) {
-      console.warn(`Scheduler: Stopping existing interval for task "${name}"`);
-      this.stop(name);
-    }
-
-    const interval = setInterval(async () => {
-      try {
-        await fn();
-      } catch (error) {
-        // Log error but don't crash the process
-        console.error(`Scheduler: Error in task "${name}":`, error);
-      }
+    const interval = setInterval(() => {
+      fn();
     }, intervalMs);
 
     this.intervals.set(name, interval);
-    console.log(`Scheduler: Task "${name}" scheduled to run every ${intervalMs}ms`);
   }
 
   stop(name: string): void {
@@ -32,7 +20,6 @@ export class SimpleScheduler implements IScheduler {
     if (interval) {
       clearInterval(interval);
       this.intervals.delete(name);
-      console.log(`Scheduler: Task "${name}" stopped`);
     }
   }
 }

@@ -9,18 +9,18 @@ export class TodoService {
   ) {}
 
   async createTodo(data: any): Promise<Todo> {
-    if (!data.title || typeof data.title !== "string" || !data.title.trim()) {
-      throw new Error("Title is required and cannot be empty or whitespace only");
+    if (!data.title || !data.title.trim()) {
+      throw new Error("Title cannot be empty or whitespace");
     }
 
     const user = await this.userRepo.findById(data.userId);
     if (!user) {
-      throw new Error(`User with ID "${data.userId}" not found`);
+      throw new Error("User not found");
     }
 
     const todo = await this.todoRepo.create({
       userId: data.userId,
-      title: data.title.trim(),
+      title: data.title,
       description: data.description,
       status: "PENDING",
       remindAt: data.remindAt ? new Date(data.remindAt) : undefined,
@@ -33,7 +33,11 @@ export class TodoService {
     const todo = await this.todoRepo.findById(todoId);
 
     if (!todo) {
-      throw new Error(`Todo with ID "${todoId}" not found`);
+      throw new Error("Not found");
+    }
+
+    if (todo.status == "DONE") {
+      return todo;
     }
 
     const updated = await this.todoRepo.update(todoId, {
@@ -42,7 +46,7 @@ export class TodoService {
     });
 
     if (!updated) {
-      throw new Error(`Failed to update todo with ID "${todoId}"`);
+      throw new Error("Not found");
     }
 
     return updated;
@@ -57,15 +61,12 @@ export class TodoService {
     const dueTodos = await this.todoRepo.findDueReminders(now);
 
     for (const todo of dueTodos) {
+      // Only process PENDING todos, skip DONE and already REMINDER_DUE
       if (todo.status === "PENDING") {
-        try {
-          await this.todoRepo.update(todo.id, {
-            status: "REMINDER_DUE",
-            updatedAt: new Date(),
-          });
-        } catch (error) {
-          console.error(`Failed to process reminder for todo ${todo.id}:`, error);
-        }
+        await this.todoRepo.update(todo.id, {
+          status: "REMINDER_DUE",
+          updatedAt: new Date(),
+        });
       }
     }
   }

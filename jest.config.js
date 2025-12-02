@@ -6,12 +6,4 @@ module.exports = {
   collectCoverageFrom: ["src/**/*.ts", "!src/**/*.d.ts"],
   coverageDirectory: "coverage",
   verbose: true,
-  globals: {
-    "ts-jest": {
-      tsconfig: {
-        noUnusedLocals: false,
-        noUnusedParameters: false,
-      },
-    },
-  },
 };
